@@ -18,7 +18,7 @@ Date: 04/10/2023
 #include <semaphore.h>
 #include <signal.h>
 
-#define PORT 8889
+#define PORT 8880
 #define PASSWORD_LENGTH 25
 
 struct Courses {
@@ -38,6 +38,7 @@ struct Student {
     char password[PASSWORD_LENGTH];
     char email[30];
     int courses_enrolled[6];
+	int isActive;
 };
 
 struct Faculty {
@@ -76,7 +77,7 @@ int main() {
 	}
     int optval = 1;
 	int optlen = sizeof(optval);
-	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, optlen)==-1){
+	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, optlen)==-1){
 		/*The setsockopt() function provides an application program with the means to control socket behavior. 
 		An application program can use setsockopt() to allocate buffer space, control timeouts, or permit socket data
 		 broadcasts.*/
@@ -164,7 +165,7 @@ void server_handler(int sig) {
 	return;
 }
 
-char *Account[3] = {"./db/accounts/admin", "./db/accounts/student", "./db/accounts/faculty"};
+char *Account[3] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty"};
 
 int login(int sock, int role){
 	int fd, valid=1, invalid=0, login_success=0;
@@ -182,25 +183,30 @@ int login(int sock, int role){
 	struct flock lock;
 	
 	int id;
-	if (strlen(login_id) >= 4 && strncmp(login_id, "MT", 2) == 0) {
+	if (strlen(login_id) >= 4 && strncmp(login_id, "AD", 2) == 0) {
     	char* number_str = login_id + 2; // Skip the first 2 characters ("MT")
     	id = atoi(number_str); // Convert the remaining characters to an integer
     } else {
     	printf("Invalid login_id format\n");
     }
-
+	printf("Login id = %d \n", id);
 	if(role == 1){
 		// admin
+		printf("inside admin \n");
 		lock.l_start = (id-1)*sizeof(struct Admin);  //lock on admin record
 		lock.l_len = sizeof(struct Admin);
 		lock.l_whence = SEEK_SET;
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
 		fcntl(fd,F_SETLK, &lock);
-		lseek(fd, (id - 1)*sizeof(struct Admin), SEEK_CUR);
+		lseek(fd, (id - 1)*sizeof(struct Admin), SEEK_SET);
 		read(fd, &admin, sizeof(struct Admin));
+		printf("admin : %s \n", admin.login_id);
+		printf("loginid: %s \n", login_id);
 		if(!strcmp(admin.login_id, login_id)) {
+			printf("inside if\n");
 			if(!strcmp(admin.password, password)) {
+				printf("inside if if");
 				write(sock, &valid, sizeof(valid));
 				write(sock, &role, sizeof(role));
 				while(-1!=adminMenu(sock, admin.login_id));

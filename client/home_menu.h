@@ -8,11 +8,11 @@ Date: 		04/10/2023
 #include "student_menu.h"
 #include "faculty_menu.h"
 
-#define PORT 8889
+#define PORT 8880
 #define PASSWORD_LENGTH 25
 
 int homeMenu(int opt,int  sock){//used in client.c
-	if(opt==1){
+	if(opt==1 || opt == 2 || opt == 3){
 		char login_id[10];
 		char password[PASSWORD_LENGTH];
 		printf("Login-Id: ");

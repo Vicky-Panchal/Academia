@@ -4,7 +4,7 @@ Roll No.: 	MT2023098
 Date: 		04/10/2023
 */
 
-#define PORT 8889
+#define PORT 8880
 #define PASSWORD_LENGTH 25
 
 int facultyMenu(int opt,int  sock){//used in client.c

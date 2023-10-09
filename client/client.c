@@ -12,14 +12,24 @@ Date: 		04/10/2023
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include<fcntl.h>
+#include<sys/stat.h>
 
 #include "welcome.h"
 #include "home_menu.h"
 
-#define PORT 8889
+#define PORT 8880
 #define PASSWORD_LENGTH 25
 
+struct Admin {
+    char login_id[10];
+    char name[30];
+    char password[PASSWORD_LENGTH];
+    char email[30];
+};
+
 int mainMenu(int sock);
+void createAdmin();
 
 int main(int argc, char * argv[]){
 	char *ip = "127.0.0.1";//if ip of server is not given in command line argument then it will
@@ -62,6 +72,7 @@ int main(int argc, char * argv[]){
 int mainMenu(int sock){
 	int opt;
 	system("clear");
+	// createAdmin();
 	printf("--------Welcome to Academia :: Course Registration--------\n");
 	printf("Login Type \n");
 	printf("Enter you choice {1. Admin, 2. Student, 3. Faculty} : \n");
@@ -73,4 +84,17 @@ int mainMenu(int sock){
 	//home menu completed
 	//user_menu
 	//admin_action | user_action
+}
+
+void createAdmin() {
+	int fd = open("./database/accounts/admin", O_RDWR);
+	struct Admin admin;
+
+	strcpy(admin.login_id, "AD001");
+    strcpy(admin.name, "Academia Admin");
+    strcpy(admin.password, "academia");
+    strcpy(admin.email, "academia@iiitb.ac.in");
+
+	write(fd, &admin, sizeof(admin));
+	close(fd);
 }
