@@ -28,6 +28,7 @@ struct Courses {
     int no_of_seats;
     int credits;
     int no_of_available_seats;
+	int isActive;
 };
 
 struct Student {

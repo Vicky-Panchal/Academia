@@ -9,16 +9,13 @@ Date: 		04/10/2023
 
 int facultyMenu(int opt,int  sock){//used in client.c
 	printf("------- Welcome to Faculty Menu --------\n");
-	printf("1. Add Student\n");
-	printf("2. View Student Details \n");
-	printf("3. Add Faculty\n");
-	printf("4. View Faculty Details\n");
-	printf("5. Activate Student\n");
-	printf("6. Block Student\n");
-	printf("7. Modify Student Details\n");
-	printf("8. Modify Faculty Details\n");
-	printf("9. Logout and Exit\n");
-
+	printf("1. View Offering Courses \n");
+	printf("2. Add New Courses \n");
+	printf("3. Remove Courses from Catalog\n");
+	printf("4. Update Course Details \n");
+	printf("5. Change Password \n");
+	printf("6. Logout & Exit\n");
+	
 	int choice;
 	printf("Enter You Choice: ");
 	scanf("%d", &choice);
