@@ -18,46 +18,12 @@ Date: 04/10/2023
 #include <semaphore.h>
 #include <signal.h>
 
-#define PORT 8880
-#define PASSWORD_LENGTH 25
+#include "database/database.h"
+#include "macros.h"
 
-struct Courses {
-    int course_id;
-    char name[30];
-    char department[20];
-    int no_of_seats;
-    int credits;
-    int no_of_available_seats;
-	int isActive;
-};
+char *Account[3] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty"};
 
-struct Student {
-    char login_id[10];
-    char name[30];
-    int age;
-    char address[50];
-    char password[PASSWORD_LENGTH];
-    char email[30];
-    int courses_enrolled[6];
-	int isActive;
-};
-
-struct Faculty {
-    char login_id[10];
-    char name[30];
-    int age;
-    char address[30];
-    char email[30];
-    char password[PASSWORD_LENGTH];
-    char courses_offered[6];
-};
-
-struct Admin {
-    char login_id[10];
-    char name[30];
-    char password[PASSWORD_LENGTH];
-    char email[30];
-};
+char *no_of[3] = {"./database/accounts/no_of_students", "./database/accounts/no_of_faculties", "./database/accounts/no_of_courses"};
 
 void server_handler(int sig);
 void service_client(int sock);
@@ -65,6 +31,7 @@ int login(int sock, int role);
 int adminMenu(int sock, char login_id[]);
 int studentMenu(int sock, char login_id[]);
 int facultyMenu(int sock, char login_id[]);
+void addStudent(int sock);
 
 int main() {
     signal(SIGTSTP, server_handler);
@@ -166,8 +133,6 @@ void server_handler(int sig) {
 	return;
 }
 
-char *Account[3] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty"};
-
 int login(int sock, int role){
 	int fd, valid=1, invalid=0, login_success=0;
 	char password[PASSWORD_LENGTH];
@@ -202,8 +167,6 @@ int login(int sock, int role){
 		fcntl(fd,F_SETLK, &lock);
 		lseek(fd, (id - 1)*sizeof(struct Admin), SEEK_SET);
 		read(fd, &admin, sizeof(struct Admin));
-		printf("admin : %s \n", admin.login_id);
-		printf("loginid: %s \n", login_id);
 		if(!strcmp(admin.login_id, login_id)) {
 			printf("inside if\n");
 			if(!strcmp(admin.password, password)) {
@@ -274,7 +237,63 @@ int login(int sock, int role){
 }
 
 int adminMenu(int sock, char login_id[]) {
+	int choice;
+	read(sock, &choice, sizeof(choice));
+
+	switch(choice) {
+		case 1: addStudent(sock);
+		break;
+
+		
+	}
 	return 0;
+}
+
+void addStudent(int sock) {
+	struct Student student;
+	read(sock, &student, sizeof(struct Student));
+	int count;
+	int count_fd = open(no_of[0], O_RDWR);
+	struct flock count_lock;
+	count_lock.l_start = 0;
+	count_lock.l_len = 0;
+	count_lock.l_whence = SEEK_SET;
+	count_lock.l_pid = getpid();
+	count_lock.l_type = F_WRLCK;
+	fcntl(count_fd, F_SETLK, &count_lock);
+	lseek(count_fd, 0, SEEK_SET);
+	int count_size = read(count_fd, &count, sizeof(count));
+	printf("count size = %d\n", count_size);
+	if(count_size <= 0) count = 0;
+	count++;
+	printf("count = %d\n", count);
+	lseek(count_fd, 0, SEEK_SET);
+	write(count_fd, &count, sizeof(count));
+	count_lock.l_type = F_UNLCK;
+	fcntl(count_fd, F_SETLK, &count_lock);
+	close(count_fd);
+
+	char num_str[4];
+    snprintf(num_str, sizeof(num_str), "%03d", count);
+	strcpy(student.login_id, "MT");
+	strcat(student.login_id, num_str);
+
+	int fd = open(Account[1], O_RDWR);
+	struct flock lock;
+
+	lock.l_start = (count-1)*sizeof(struct Student);  //lock on admin record
+	lock.l_len = sizeof(struct Student);
+	lock.l_whence = SEEK_SET;
+	lock.l_pid = getpid();
+	lock.l_type = F_WRLCK;
+	fcntl(fd,F_SETLK, &lock);
+	write(fd, &student, sizeof(struct Student));
+	lseek(fd, count*sizeof(struct Student), SEEK_SET);
+	write(fd, &student, sizeof(student));
+	lock.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &lock);
+	close(fd);
+	printf("\n Student Login Id: %s \n", student.login_id);
 }
 int studentMenu(int sock, char login_id[]) {
 	return 0;

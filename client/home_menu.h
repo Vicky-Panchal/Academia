@@ -8,8 +8,7 @@ Date: 		04/10/2023
 #include "student_menu.h"
 #include "faculty_menu.h"
 
-#define PORT 8880
-#define PASSWORD_LENGTH 25
+#include "../macros.h"
 
 int homeMenu(int opt,int  sock){//used in client.c
 	if(opt==1 || opt == 2 || opt == 3){

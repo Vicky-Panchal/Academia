@@ -17,19 +17,11 @@ Date: 		04/10/2023
 
 #include "welcome.h"
 #include "home_menu.h"
+#include "../macros.h"
 
-#define PORT 8880
-#define PASSWORD_LENGTH 25
-
-struct Admin {
-    char login_id[10];
-    char name[30];
-    char password[PASSWORD_LENGTH];
-    char email[30];
-};
 
 int mainMenu(int sock);
-void createAdmin();
+// void createAdmin();
 
 int main(int argc, char * argv[]){
 	char *ip = "127.0.0.1";//if ip of server is not given in command line argument then it will
@@ -86,15 +78,15 @@ int mainMenu(int sock){
 	//admin_action | user_action
 }
 
-void createAdmin() {
-	int fd = open("./database/accounts/admin", O_RDWR);
-	struct Admin admin;
+// void createAdmin() {
+// 	int fd = open("./database/accounts/admin", O_RDWR);
+// 	struct Admin admin;
 
-	strcpy(admin.login_id, "AD001");
-    strcpy(admin.name, "Academia Admin");
-    strcpy(admin.password, "academia");
-    strcpy(admin.email, "academia@iiitb.ac.in");
+// 	strcpy(admin.login_id, "AD001");
+//     strcpy(admin.name, "Academia Admin");
+//     strcpy(admin.password, "academia");
+//     strcpy(admin.email, "academia@iiitb.ac.in");
 
-	write(fd, &admin, sizeof(admin));
-	close(fd);
-}
+// 	write(fd, &admin, sizeof(admin));
+// 	close(fd);
+// }
