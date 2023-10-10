@@ -24,8 +24,9 @@ int homeMenu(int opt,int  sock){//used in client.c
 		int valid_login;
 		int role;
 		read(sock, &valid_login, sizeof(valid_login));
-		read(sock, &role, sizeof(role));
+		printf("valid login is: %d\n", valid_login);
 		if(valid_login == 1){
+			read(sock, &role, sizeof(role));
 			switch(role) {
 				case 1: while(adminMenu(role, sock)!=-1);
 				break;
@@ -35,6 +36,8 @@ int homeMenu(int opt,int  sock){//used in client.c
 
 				case 3: while(facultyMenu(role, sock)!=-1);
 				break;
+
+				default: printf("Invalid Choice \n");
 			}
 			system("clear");
 			return 1;

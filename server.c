@@ -147,9 +147,16 @@ int login(int sock, int role){
 
 	if((fd = open(Account[role-1], O_RDWR))==-1)printf("File Error\n");
 	struct flock lock;
-	
+	char *idPrefix;
+	if(role == 1) {
+		idPrefix = "AD";
+	} else if(role == 2) {
+		idPrefix = "MT";
+	} else {
+		idPrefix = "FT";
+	}
 	int id;
-	if (strlen(login_id) >= 4 && strncmp(login_id, "AD", 2) == 0) {
+	if (strlen(login_id) >= 4 && strncmp(login_id, idPrefix, 2) == 0) {
     	char* number_str = login_id + 2; // Skip the first 2 characters ("MT")
     	id = atoi(number_str); // Convert the remaining characters to an integer
     } else {
@@ -164,13 +171,18 @@ int login(int sock, int role){
 		lock.l_whence = SEEK_SET;
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
-		fcntl(fd,F_SETLK, &lock);
+		if(fcntl(fd,F_SETLK, &lock) == -1) {
+			valid = 0;
+			write(sock, &valid, sizeof(valid));
+		};
 		lseek(fd, (id - 1)*sizeof(struct Admin), SEEK_SET);
 		read(fd, &admin, sizeof(struct Admin));
+		printf("admin login id: %sl\n", admin.login_id);
+		printf("login id %sl\n", login_id);
 		if(!strcmp(admin.login_id, login_id)) {
-			printf("inside if\n");
+			printf("inside lock \n");
 			if(!strcmp(admin.password, password)) {
-				printf("inside if if");
+				printf("inside password \n");
 				write(sock, &valid, sizeof(valid));
 				write(sock, &role, sizeof(role));
 				while(-1!=adminMenu(sock, admin.login_id));
@@ -190,15 +202,25 @@ int login(int sock, int role){
 		lock.l_whence = SEEK_SET;
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
-		fcntl(fd,F_SETLK, &lock);
-		lseek(fd, (id - 1)*sizeof(struct Student), SEEK_CUR);
+		if(fcntl(fd,F_SETLK, &lock) == -1) {
+			valid = 0;
+			write(sock, &valid, sizeof(valid));
+		};
+		lseek(fd, (id)*sizeof(struct Student), SEEK_SET);
 		read(fd, &student, sizeof(struct Student));
+		printf("Student login %s\n", student.login_id);
+		printf("login id %s\n", login_id);
 		if(!strcmp(student.login_id, login_id)) {
+			printf("s pwd %s\n", student.password);
+			printf("pwd : %s\n", password);
 			if(!strcmp(student.password, password)) {
+				printf("inside if if\n");
 				write(sock, &valid, sizeof(valid));
 				write(sock, &role, sizeof(role));
 				while(-1!=studentMenu(sock, student.login_id));
 				login_success = 1;
+			} else {
+				printf("Invalid login");
 			}
 		}
 		lock.l_type = F_UNLCK;
@@ -244,7 +266,7 @@ int adminMenu(int sock, char login_id[]) {
 		case 1: addStudent(sock);
 		break;
 
-		
+		case 9: return -1;
 	}
 	return 0;
 }
@@ -296,6 +318,7 @@ void addStudent(int sock) {
 	printf("\n Student Login Id: %s \n", student.login_id);
 }
 int studentMenu(int sock, char login_id[]) {
+
 	return 0;
 }
 int facultyMenu(int sock, char login_id[]) {
