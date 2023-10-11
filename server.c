@@ -83,6 +83,9 @@ int main() {
 		printf("listen failed\n");
 		exit(0);
 	}
+	else {
+		printf("Listening on port %d\n", PORT);
+	}
 	while(1){ 
 		int connectedfd;
 		if((connectedfd = accept(sockfd, (struct sockaddr *)NULL, NULL))==-1){
@@ -97,7 +100,7 @@ int main() {
 			exit(0);
 		}
 		//in else part below, connectedfd has been assigned a value
-		printf("Server Started Successfully....");
+		printf("Server Started Successfully....\n");
 		pthread_t cli;
 		if(fork()==0)//means child process will cater the client
 			service_client(connectedfd);
@@ -109,7 +112,6 @@ int main() {
 
 void service_client(int sock){
 	int func_id;
-    printf("--------------------");
 	read(sock, &func_id, sizeof(int));//value of func_id will be given by client. read() is being done on sock
 	printf("Client [%d] connected\n", sock);
 	while(1){		
@@ -172,13 +174,14 @@ int login(int sock, int role){
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
 		if(fcntl(fd,F_SETLK, &lock) == -1) {
-			valid = 0;
-			write(sock, &valid, sizeof(valid));
+			printf("inside fcntl \n");
+			write(sock, &invalid, sizeof(invalid));
+			return 0;
 		};
 		lseek(fd, (id - 1)*sizeof(struct Admin), SEEK_SET);
 		read(fd, &admin, sizeof(struct Admin));
-		printf("admin login id: %sl\n", admin.login_id);
-		printf("login id %sl\n", login_id);
+		printf("admin login id: %s\n", admin.login_id);
+		printf("login id %s \n", password);
 		if(!strcmp(admin.login_id, login_id)) {
 			printf("inside lock \n");
 			if(!strcmp(admin.password, password)) {
@@ -282,7 +285,7 @@ void addStudent(int sock) {
 	count_lock.l_whence = SEEK_SET;
 	count_lock.l_pid = getpid();
 	count_lock.l_type = F_WRLCK;
-	fcntl(count_fd, F_SETLK, &count_lock);
+	fcntl(count_fd, F_SETLKW, &count_lock);
 	lseek(count_fd, 0, SEEK_SET);
 	int count_size = read(count_fd, &count, sizeof(count));
 	printf("count size = %d\n", count_size);
@@ -291,9 +294,6 @@ void addStudent(int sock) {
 	printf("count = %d\n", count);
 	lseek(count_fd, 0, SEEK_SET);
 	write(count_fd, &count, sizeof(count));
-	count_lock.l_type = F_UNLCK;
-	fcntl(count_fd, F_SETLK, &count_lock);
-	close(count_fd);
 
 	char num_str[4];
     snprintf(num_str, sizeof(num_str), "%03d", count);
@@ -309,7 +309,9 @@ void addStudent(int sock) {
 	lock.l_pid = getpid();
 	lock.l_type = F_WRLCK;
 	fcntl(fd,F_SETLK, &lock);
-	write(fd, &student, sizeof(struct Student));
+	count_lock.l_type = F_UNLCK;
+	fcntl(count_fd, F_SETLK, &count_lock);
+	close(count_fd);
 	lseek(fd, count*sizeof(struct Student), SEEK_SET);
 	write(fd, &student, sizeof(student));
 	lock.l_type = F_UNLCK;
@@ -318,7 +320,15 @@ void addStudent(int sock) {
 	printf("\n Student Login Id: %s \n", student.login_id);
 }
 int studentMenu(int sock, char login_id[]) {
+	int choice;
+	read(sock, &choice, sizeof(choice));
 
+	switch(choice) {
+		case 1: 
+		break;
+
+		case 9: return -1;
+	}
 	return 0;
 }
 int facultyMenu(int sock, char login_id[]) {

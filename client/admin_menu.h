@@ -5,7 +5,8 @@ Date: 		04/10/2023
 */
 
 #include "../macros.h"
-#include "../database/database.h"
+// #include "../database/database.h"
+
 void addStudent(int sock);
 
 int adminMenu(int opt,int  sock){//used in client.c
@@ -29,13 +30,12 @@ int adminMenu(int opt,int  sock){//used in client.c
 		case 1: addStudent(sock);
 		break;
 
+		case 9: exit(0);
 	}
 }
 char *Account[3] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty"};
 void addStudent(int sock) {
 	struct Student student;
-	int count = 0;
-	struct flock lock;
 
 	printf("Enter Student Name: \n");
 	scanf("%s", student.name);
