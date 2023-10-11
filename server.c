@@ -21,7 +21,7 @@ Date: 04/10/2023
 #include "database/database.h"
 #include "macros.h"
 
-char *Account[3] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty"};
+char *Account[4] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty", "./database/courses"};
 
 char *no_of[3] = {"./database/accounts/no_of_students", "./database/accounts/no_of_faculties", "./database/accounts/no_of_courses"};
 
@@ -32,6 +32,9 @@ int adminMenu(int sock, char login_id[]);
 int studentMenu(int sock, char login_id[]);
 int facultyMenu(int sock, char login_id[]);
 void addStudent(int sock);
+void addNewCourse(int sock);
+void viewOfferingCourses(char login_id[], int sock);
+void viewStudent(int sock);
 
 int main() {
     signal(SIGTSTP, server_handler);
@@ -269,11 +272,27 @@ int adminMenu(int sock, char login_id[]) {
 		case 1: addStudent(sock);
 		break;
 
+		case 2: viewStudent(sock);
+		break;
+
 		case 9: return -1;
 	}
 	return 0;
 }
 
+void viewStudent(int sock){
+	printf("Inside the View Student Function \n");
+	
+	int fd = open(Account[1], O_RDWR);
+	struct Student student;
+	int count = 0;
+	while(read(fd,&student,sizeof(student))){
+		lseek(fd, count*sizeof(struct Student), SEEK_SET);
+		printf("Count = %d \tRoll No: %s\n",count,student.login_id);
+		count++;
+	}
+
+}
 void addStudent(int sock) {
 	struct Student student;
 	read(sock, &student, sizeof(struct Student));
@@ -332,5 +351,79 @@ int studentMenu(int sock, char login_id[]) {
 	return 0;
 }
 int facultyMenu(int sock, char login_id[]) {
+	int choice;
+	read(sock, &choice, sizeof(choice));
+
+	switch(choice) {
+		case 1: viewOfferingCourses(login_id, sock);
+		break;
+
+		case 2: addNewCourse(sock);
+		break;
+
+		case 9: return -1;
+	}
 	return 0;
+}
+
+void viewOfferingCourses(char login_id[], int sock) {
+	int count;
+
+	int fd = open(no_of[2], O_RDONLY);
+	lseek(fd, 0, SEEK_SET);
+	read(fd, &count, sizeof(count));
+	close(fd);
+	struct Courses courseItem;
+	while(read(fd, &courseItem, sizeof(courseItem))) {
+		write(sock, &courseItem, sizeof(courseItem));
+	}
+	
+}
+
+void addNewCourse(int sock) {
+	struct Courses course;
+
+	read(sock, &course, sizeof(course));
+
+	int count;
+	int count_fd = open(no_of[2], O_RDWR);
+	struct flock count_lock;
+	count_lock.l_start = 0;
+	count_lock.l_len = 0;
+	count_lock.l_whence = SEEK_SET;
+	count_lock.l_pid = getpid();
+	count_lock.l_type = F_WRLCK;
+	fcntl(count_fd, F_SETLKW, &count_lock);
+	lseek(count_fd, 0, SEEK_SET);
+	int count_size = read(count_fd, &count, sizeof(count));
+	printf("count size = %d\n", count_size);
+	if(count_size <= 0) count = 0;
+	count++;
+	printf("count = %d\n", count);
+	lseek(count_fd, 0, SEEK_SET);
+	write(count_fd, &count, sizeof(count));
+
+	char num_str[4];
+    snprintf(num_str, sizeof(num_str), "%03d", count);
+	strcpy(course.course_id, "CS");
+	strcat(course.course_id, num_str);
+
+	int fd = open(Account[3], O_RDWR);
+	struct flock lock;
+
+	lock.l_start = (count-1)*sizeof(struct Courses);  //lock on admin record
+	lock.l_len = sizeof(struct Courses);
+	lock.l_whence = SEEK_SET;
+	lock.l_pid = getpid();
+	lock.l_type = F_WRLCK;
+	fcntl(fd,F_SETLK, &lock);
+	count_lock.l_type = F_UNLCK;
+	fcntl(count_fd, F_SETLK, &count_lock);
+	close(count_fd);
+	lseek(fd, count*sizeof(struct Courses), SEEK_SET);
+	write(fd, &course, sizeof(course));
+	lock.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &lock);
+	close(fd);
+	printf("\n Course Id: %s \n", course.course_id);
 }

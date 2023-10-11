@@ -7,10 +7,10 @@ Date: 		04/10/2023
 #include "../macros.h"
 // #include "../database/database.h"
 
-void viewOfferingCourses();
-void addNewCourse();
+void viewOfferingCourses(char* login_id,int sock);
+void addNewCourse(char* login_id,int sock);
 
-int facultyMenu(int opt,int  sock){//used in client.c
+int facultyMenu(char* login_id,int  sock){//used in client.c
 	printf("------- Welcome to Faculty Menu --------\n");
 	printf("1. View Offering Courses \n");
 	printf("2. Add New Courses \n");
@@ -40,21 +40,24 @@ int facultyMenu(int opt,int  sock){//used in client.c
 	write(sock, &choice, sizeof(choice));
 
 	switch(choice) {
-		case 1: viewOfferingCourses();
+		case 1: viewOfferingCourses(login_id, sock);
 		break;
 
-		case 2: addNewCourse();
+		case 2: addNewCourse(login_id, sock);
 		break;
 
 		case 6: exit(0);
 	}
 }
 
-void viewOfferingCourses() {
+void viewOfferingCourses(char* login_id,int sock) {
+	int count;
+	struct Courses course[count];
 
+	
 }
 
-void addNewCourse() {
+void addNewCourse(char* login_id,int sock) {
 	struct Courses course;
 
 	write(STDOUT_FILENO, "Enter Course Name: ", 20);
@@ -74,4 +77,6 @@ void addNewCourse() {
 
     write(STDOUT_FILENO, "Enter Active Status (0 or 1): ", 30);
     read(STDIN_FILENO, &course.isActive, sizeof(course.isActive));
+
+	write(sock, &course, sizeof(course));
 }

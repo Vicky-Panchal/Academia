@@ -7,7 +7,7 @@ Date: 		04/10/2023
 #include "../macros.h"
 
 
-int studentMenu(int opt,int  sock){//used in client.c
+int studentMenu(char *login_id,int  sock){//used in client.c
 printf("------- Welcome to Student Menu --------\n");
 	printf("1. View All Courses\n");
 	printf("2. Enroll (pick) New Course\n");

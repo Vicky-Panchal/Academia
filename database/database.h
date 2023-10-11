@@ -1,7 +1,7 @@
 #include "../macros.h"
 
 struct Courses {
-    int course_id;
+    char course_id[10];
     char name[30];
     char department[20];
     int no_of_seats;
