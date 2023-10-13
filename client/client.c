@@ -55,7 +55,7 @@ int main(int argc, char * argv[]){
 	printf("connection established\n");
 	
 	welcome_screen();
-	while(mainMenu(cli_fd)!=3);
+	while(mainMenu(cli_fd)!=4);
 	close(cli_fd);
 
 	return 0;
@@ -67,7 +67,7 @@ int mainMenu(int sock){
 	// createAdmin();
 	printf("--------Welcome to Academia :: Course Registration--------\n");
 	printf("Login Type \n");
-	printf("Enter you choice {1. Admin, 2. Student, 3. Faculty} : \n");
+	printf("Enter you choice {1. Admin, 2. Student, 3. Faculty, 4. Exit } : \n");
 	scanf("%d", &opt);
 	write(sock, &opt, sizeof(opt));
 

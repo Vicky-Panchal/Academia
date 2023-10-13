@@ -36,6 +36,7 @@ void addNewCourse(char login_id[], int sock);
 void viewOfferingCourses(char login_id[], int sock);
 void viewStudent(int sock);
 void addFaculty(int sock);
+void removeCourse(char login_id[], int sock);
 
 int main() {
     signal(SIGTSTP, server_handler);
@@ -285,6 +286,8 @@ int adminMenu(int sock, char login_id[]) {
 		break;
 
 		case 9: return -1;
+
+		default: return -1;
 	}
 	return 0;
 }
@@ -356,6 +359,8 @@ int studentMenu(int sock, char login_id[]) {
 		break;
 
 		case 9: return -1;
+
+		default: return -1;
 	}
 	return 0;
 }
@@ -370,7 +375,12 @@ int facultyMenu(int sock, char login_id[]) {
 		case 2: addNewCourse(login_id, sock);
 		break;
 
+		case 3: removeCourse(login_id, sock);
+		break;
+
 		case 6: return -1;
+
+		default: return -1;
 	}
 	return 0;
 }
@@ -392,7 +402,7 @@ void viewOfferingCourses(char login_id[], int sock) {
 	while(read(fd, &courseItem, sizeof(courseItem))) {
 		cnt++;
 		lseek(fd, cnt*sizeof(courseItem), SEEK_SET);
-		if(!strcmp(courseItem.faculty_id, login_id)) {
+		if(!strcmp(courseItem.faculty_id, login_id) && courseItem.isActive) {
 			course[i] = courseItem;
 			i++;
 		}
@@ -552,4 +562,51 @@ void addFaculty(int sock){
 	fcntl(fd, F_SETLK, &lock);
 	close(fd);
 	printf("\n Faculty Login Id: %s \n", faculy.login_id);
+}
+
+void removeCourse(char login_id[], int sock) {
+	char courseId[5];
+	int isExist = 0;
+	int invalid = 0, valid = 1;
+	read(sock, &courseId, sizeof(courseId));
+
+	char num_str[4];
+	strcpy(num_str, 2+courseId);
+	num_str[3] = '\0';
+	int id = atoi(num_str);
+
+	struct flock lock;
+	struct Courses course;
+	int fd = open(Account[3], O_RDWR);
+
+	lock.l_start = (id-1)*sizeof(struct Courses);
+	lock.l_len = sizeof(struct Courses);
+	lock.l_whence = SEEK_SET;
+	lock.l_pid = getpid();
+	lock.l_type = F_WRLCK;
+	if(fcntl(fd,F_SETLK, &lock)==-1) {
+		write(sock, &invalid, sizeof(invalid));
+		close(fd);
+		return;
+	}
+	write(sock, &valid, sizeof(valid));
+	lseek(fd, (id-1)*sizeof(struct Courses), SEEK_SET);
+	read(fd, &course, sizeof(struct Courses));
+
+	if(strcmp(course.course_id, courseId) || strcmp(course.faculty_id, login_id)) {
+		write(sock, &isExist, sizeof(isExist));
+		lock.l_type = F_UNLCK;
+		fcntl(fd, F_SETLK, &lock);
+		close(fd);
+		return;
+	}
+	isExist = 1;
+	write(sock, &isExist, sizeof(isExist));
+	course.isActive = 0;
+	lseek(fd, (id-1)*sizeof(struct Courses), SEEK_SET);
+	write(fd, &course, sizeof(struct Courses));
+	
+	lock.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &lock);
+	close(fd);
 }

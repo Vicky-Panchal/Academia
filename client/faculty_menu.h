@@ -5,13 +5,15 @@ Date: 		04/10/2023
 */
 
 #include "../macros.h"
-// #include "../database/database.h"
 
 void viewOfferingCourses(char* login_id,int sock);
 void addNewCourse(int sock);
+void removeCourse(int sock);
+void updateCourse(int sock);
+void changePassword(int sock);
 
 int facultyMenu(char* login_id,int  sock){//used in client.c
-	printf("------- Welcome to Faculty Menu --------\n");
+	printf("\n------- Welcome to Faculty Menu --------\n");
 	printf("1. View Offering Courses \n");
 	printf("2. Add New Courses \n");
 	printf("3. Remove Courses from Catalog\n");
@@ -28,14 +30,14 @@ int facultyMenu(char* login_id,int  sock){//used in client.c
     ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
     if (bytesRead == -1) {
         perror("read");
-        exit(EXIT_FAILURE);
+        return 0;
     }
 
     buffer[bytesRead] = '\0';
 
     if (sscanf(buffer, "%d", &choice) != 1) {
-        fprintf(stderr, "Invalid input. Please enter an integer.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "\nInvalid input. Please enter an integer.\n");
+        return 0;
     }
 	write(sock, &choice, sizeof(choice));
 
@@ -46,7 +48,16 @@ int facultyMenu(char* login_id,int  sock){//used in client.c
 		case 2: addNewCourse(sock);
 		break;
 
-		case 6: exit(0);
+		case 3: removeCourse(sock);
+		break;
+
+		case 4: updateCourse(sock);
+		break;
+
+		case 5: changePassword(sock);
+		break;
+
+		case 6: return -1;
 	}
 }
 
@@ -106,4 +117,36 @@ void addNewCourse(int sock) {
     read(STDIN_FILENO, &course.no_of_available_seats, sizeof(course.no_of_available_seats));
 
 	write(sock, &course, sizeof(course));
+}
+
+void removeCourse(int sock) {
+	char courseId[5];
+	int isExist;
+	int isValid;
+	write(STDOUT_FILENO, "Enter Course Id to delete: ", sizeof("Enter Course Id to delete: "));
+	read(STDIN_FILENO, &courseId, sizeof(courseId));
+
+	write(sock, &courseId, sizeof(courseId));
+	read(sock, &isValid, sizeof(isValid));
+	if(!isValid) {
+		write(STDOUT_FILENO, "\nUnable to Remove Course at the momemt, please try after sometime...", sizeof("Unable to Remove Course at the momemt, please try after sometime..."));
+		return;
+	}
+	read(sock, &isExist, sizeof(isExist));
+
+	if(!isExist) {
+		write(STDOUT_FILENO, "\nCourse with the given course id doesn't exist", sizeof("\nCourse with the given course id doesn't exist"));
+	}
+	else {
+		write(STDOUT_FILENO, "\nCourse Deleted Successfully", sizeof("\nCourse Deleted Successfully"));
+	}
+	return;
+}
+
+void updateCourse(int sock) {
+
+}
+
+void changePassword(int sock) {
+
 }

@@ -49,6 +49,7 @@ int homeMenu(int opt,int  sock){//used in client.c
 			return 1;
 		}
 	}
-	else
-		return 3;
+	else {
+		return 4;
+	}
 }
