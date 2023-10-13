@@ -8,6 +8,7 @@ Date: 		04/10/2023
 // #include "../database/database.h"
 
 void addStudent(int sock);
+void addFaculty(int sock);
 
 int adminMenu(int opt,int  sock){//used in client.c
 	printf("------- Welcome to Admin Menu --------\n");
@@ -30,6 +31,8 @@ int adminMenu(int opt,int  sock){//used in client.c
 		case 1: addStudent(sock);
 		break;
 
+		case 3: addFaculty(sock);
+		break;
 		case 9: exit(0);
 	}
 }
@@ -51,3 +54,21 @@ void addStudent(int sock) {
 	write(sock, &student, sizeof(struct Student));
 }
 
+void addFaculty(int sock) {
+	struct Faculty faculty;
+	int count = 0;
+	struct flock lock;
+	printf("***************  Enter Faculty Details  ***************\n");
+	printf("Name: ");
+	scanf("%s", faculty.name);
+	printf("Age: ");
+	scanf("%d", &faculty.age);
+	printf("Address: ");
+	scanf("%s", faculty.address);
+	printf("Password: ");
+	scanf("%s", faculty.password);
+	printf("Email Address: ");
+	scanf("%s", faculty.email);
+	
+	write(sock, &faculty, sizeof(struct Faculty));
+}

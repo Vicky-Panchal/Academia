@@ -8,7 +8,7 @@ Date: 		04/10/2023
 // #include "../database/database.h"
 
 void viewOfferingCourses(char* login_id,int sock);
-void addNewCourse(char* login_id,int sock);
+void addNewCourse(int sock);
 
 int facultyMenu(char* login_id,int  sock){//used in client.c
 	printf("------- Welcome to Faculty Menu --------\n");
@@ -43,7 +43,7 @@ int facultyMenu(char* login_id,int  sock){//used in client.c
 		case 1: viewOfferingCourses(login_id, sock);
 		break;
 
-		case 2: addNewCourse(login_id, sock);
+		case 2: addNewCourse(sock);
 		break;
 
 		case 6: exit(0);
@@ -51,14 +51,44 @@ int facultyMenu(char* login_id,int  sock){//used in client.c
 }
 
 void viewOfferingCourses(char* login_id,int sock) {
-	int count;
-	struct Courses course[count];
-
-	
+	struct Courses course[6];
+	int n;
+	read(sock, &n, sizeof(n));
+	read(sock, &course, sizeof(course));
+	if(n >= 1) {
+		for(int i = 0; i < n; i++) {
+			write(STDOUT_FILENO, "******Course Details*****\n", strlen("******Course Details*****\n"));
+    		write(STDOUT_FILENO, "Course Id: ", strlen("Course Id: "));
+			write(STDOUT_FILENO, course[i].course_id, strlen(course[i].course_id));
+			write(STDOUT_FILENO, "\nName: ", strlen("\nName: "));
+			write(STDOUT_FILENO, course[i].name, strlen(course[i].name));
+			write(STDOUT_FILENO, "\nDepartment: ", strlen("\nDepartment: "));
+			write(STDOUT_FILENO, course[i].department, strlen(course[i].department));
+			write(STDOUT_FILENO, "\nCredits: ", strlen("\nCredits: "));
+			write(STDOUT_FILENO, &course[i].credits, sizeof(course[i].credits));
+			write(STDOUT_FILENO, "\nNo. Of Available Seats: ", strlen("\nNo. Of Available Seats: "));
+			write(STDOUT_FILENO, &course[i].no_of_available_seats, sizeof(course[i].no_of_available_seats));
+			write(STDOUT_FILENO, "\nNo. Of Seats: ", strlen("\nNo. Of Seats: "));
+			write(STDOUT_FILENO, &course[i].no_of_seats, sizeof(course[i].no_of_seats));
+			write(STDOUT_FILENO, "\n \n", strlen("\n \n"));
+		}	
+	}
+	else {
+		write(STDOUT_FILENO, "No Course Found!", 17);
+	}
 }
 
-void addNewCourse(char* login_id,int sock) {
+void addNewCourse(int sock) {
 	struct Courses course;
+
+	int isCourseFull;
+
+	read(sock, &isCourseFull, sizeof(isCourseFull));
+
+	if(isCourseFull) {
+		write(STDOUT_FILENO, "You Cannot Add Any More Courses \n", sizeof("You Cannot Add Any More Courses \n"));
+		return;
+	}
 
 	write(STDOUT_FILENO, "Enter Course Name: ", 20);
     read(STDIN_FILENO, course.name, sizeof(course.name));
@@ -74,9 +104,6 @@ void addNewCourse(char* login_id,int sock) {
 
     write(STDOUT_FILENO, "Enter Available Seats: ", 23);
     read(STDIN_FILENO, &course.no_of_available_seats, sizeof(course.no_of_available_seats));
-
-    write(STDOUT_FILENO, "Enter Active Status (0 or 1): ", 30);
-    read(STDIN_FILENO, &course.isActive, sizeof(course.isActive));
 
 	write(sock, &course, sizeof(course));
 }

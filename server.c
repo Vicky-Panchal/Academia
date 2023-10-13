@@ -32,9 +32,10 @@ int adminMenu(int sock, char login_id[]);
 int studentMenu(int sock, char login_id[]);
 int facultyMenu(int sock, char login_id[]);
 void addStudent(int sock);
-void addNewCourse(int sock);
+void addNewCourse(char login_id[], int sock);
 void viewOfferingCourses(char login_id[], int sock);
 void viewStudent(int sock);
+void addFaculty(int sock);
 
 int main() {
     signal(SIGTSTP, server_handler);
@@ -177,7 +178,6 @@ int login(int sock, int role){
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
 		if(fcntl(fd,F_SETLK, &lock) == -1) {
-			printf("inside fcntl \n");
 			write(sock, &invalid, sizeof(invalid));
 			return 0;
 		};
@@ -209,8 +209,8 @@ int login(int sock, int role){
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
 		if(fcntl(fd,F_SETLK, &lock) == -1) {
-			valid = 0;
-			write(sock, &valid, sizeof(valid));
+			write(sock, &invalid, sizeof(invalid));
+			return 0;
 		};
 		lseek(fd, (id)*sizeof(struct Student), SEEK_SET);
 		read(fd, &student, sizeof(struct Student));
@@ -238,18 +238,24 @@ int login(int sock, int role){
 	}
 	else if(role == 3){
 		// Faculty
+		printf("inside faculty \n");
 		lock.l_start = (id-1)*sizeof(struct Faculty);  //lock on admin record
 		lock.l_len = sizeof(struct Faculty);
 		lock.l_whence = SEEK_SET;
 		lock.l_pid = getpid();
 		lock.l_type = F_WRLCK;
-		fcntl(fd,F_SETLK, &lock);
+		if(fcntl(fd,F_SETLK, &lock)==-1) {
+			printf("lock not acquired \n");
+			write(sock, &invalid, sizeof(invalid));
+			return 0;
+		}
 		lseek(fd, (id - 1)*sizeof(struct Faculty), SEEK_CUR);
 		read(fd, &faculty, sizeof(struct Faculty));
 		if(!strcmp(faculty.login_id, login_id)) {
 			if(!strcmp(faculty.password, password)) {
 				write(sock, &valid, sizeof(valid));
 				write(sock, &role, sizeof(role));
+				printf("logged faculty is: %s\n", faculty.login_id);
 				while(-1!=facultyMenu(sock, faculty.login_id));
 				login_success = 1;
 			}
@@ -275,6 +281,9 @@ int adminMenu(int sock, char login_id[]) {
 		case 2: viewStudent(sock);
 		break;
 
+		case 3: addFaculty(sock);
+		break;
+
 		case 9: return -1;
 	}
 	return 0;
@@ -287,9 +296,9 @@ void viewStudent(int sock){
 	struct Student student;
 	int count = 0;
 	while(read(fd,&student,sizeof(student))){
+		count++;
 		lseek(fd, count*sizeof(struct Student), SEEK_SET);
 		printf("Count = %d \tRoll No: %s\n",count,student.login_id);
-		count++;
 	}
 
 }
@@ -331,7 +340,7 @@ void addStudent(int sock) {
 	count_lock.l_type = F_UNLCK;
 	fcntl(count_fd, F_SETLK, &count_lock);
 	close(count_fd);
-	lseek(fd, count*sizeof(struct Student), SEEK_SET);
+	lseek(fd, (count-1)*sizeof(struct Student), SEEK_SET);
 	write(fd, &student, sizeof(student));
 	lock.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &lock);
@@ -358,10 +367,10 @@ int facultyMenu(int sock, char login_id[]) {
 		case 1: viewOfferingCourses(login_id, sock);
 		break;
 
-		case 2: addNewCourse(sock);
+		case 2: addNewCourse(login_id, sock);
 		break;
 
-		case 9: return -1;
+		case 6: return -1;
 	}
 	return 0;
 }
@@ -369,21 +378,76 @@ int facultyMenu(int sock, char login_id[]) {
 void viewOfferingCourses(char login_id[], int sock) {
 	int count;
 
-	int fd = open(no_of[2], O_RDONLY);
-	lseek(fd, 0, SEEK_SET);
-	read(fd, &count, sizeof(count));
-	close(fd);
-	struct Courses courseItem;
-	while(read(fd, &courseItem, sizeof(courseItem))) {
-		write(sock, &courseItem, sizeof(courseItem));
-	}
+	int count_fd = open(no_of[2], O_RDONLY);
+	lseek(count_fd, 0, SEEK_SET);
+	read(count_fd, &count, sizeof(count));
+	close(count_fd);
 	
+	struct Courses courseItem;
+	struct Courses course[6];
+	int fd = open(Account[3], O_RDONLY);
+	int i = 0;
+	int cnt = 0;
+	lseek(fd, 0, SEEK_SET);
+	while(read(fd, &courseItem, sizeof(courseItem))) {
+		cnt++;
+		lseek(fd, cnt*sizeof(courseItem), SEEK_SET);
+		if(!strcmp(courseItem.faculty_id, login_id)) {
+			course[i] = courseItem;
+			i++;
+		}
+	}
+	write(sock, &i, sizeof(i));
+	write(sock, &course, sizeof(course));
 }
 
-void addNewCourse(int sock) {
+void addNewCourse(char login_id[], int sock) {
+	int isCourseFull = 0;
+	struct flock facultyLock;
+	char num_str[4];
+	strcpy(num_str, 2+login_id);
+	num_str[3] = '\0';
+	int id = atoi(num_str);
+
+	int faculty_fd = open(Account[2], O_RDWR);
+	struct Faculty faculty;
+
+	facultyLock.l_start = (id-1)*sizeof(struct Faculty);  //lock on course record
+	facultyLock.l_len = sizeof(struct Faculty);
+	facultyLock.l_whence = SEEK_SET;
+	facultyLock.l_pid = getpid();
+	facultyLock.l_type = F_WRLCK;
+	fcntl(faculty_fd,F_SETLK, &facultyLock);
+
+	lseek(faculty_fd, (id-1)*sizeof(struct Faculty), SEEK_SET);
+	read(faculty_fd, &faculty, sizeof(faculty));
+
+	
+	if(faculty.courseCount == 6) {
+		isCourseFull = 1;
+		write(sock, &isCourseFull, sizeof(isCourseFull));
+
+		facultyLock.l_type = F_UNLCK;
+		fcntl(faculty_fd, F_SETLK, &facultyLock);
+		close(faculty_fd);
+		return;
+	}
+
+	faculty.courseCount += 1;
+	lseek(faculty_fd, (id-1)*sizeof(struct Faculty), SEEK_SET);
+	write(faculty_fd, &faculty, sizeof(faculty));
+
+	write(sock, &isCourseFull, sizeof(isCourseFull));
+
+	facultyLock.l_type = F_UNLCK;
+	fcntl(faculty_fd, F_SETLK, &facultyLock);
+	close(faculty_fd);
+
 	struct Courses course;
 
 	read(sock, &course, sizeof(course));
+	strcpy(course.faculty_id, login_id);
+	course.isActive = 1;
 
 	int count;
 	int count_fd = open(no_of[2], O_RDWR);
@@ -395,6 +459,56 @@ void addNewCourse(int sock) {
 	count_lock.l_type = F_WRLCK;
 	fcntl(count_fd, F_SETLKW, &count_lock);
 	lseek(count_fd, 0, SEEK_SET);
+
+	int count_size = read(count_fd, &count, sizeof(count));
+	if(count_size <= 0) count = 0;
+	count++;
+	printf("count = %d\n", count);
+	lseek(count_fd, 0, SEEK_SET);
+	write(count_fd, &count, sizeof(count));
+
+	char num_str2[4];
+    snprintf(num_str2, sizeof(num_str2), "%03d", count);
+	strcpy(course.course_id, "CS");
+	strcat(course.course_id, num_str2);
+
+	int fd = open(Account[3], O_RDWR);
+	struct flock lock;
+
+	lock.l_start = (count-1)*sizeof(struct Courses);  //lock on course record
+	lock.l_len = sizeof(struct Courses);
+	lock.l_whence = SEEK_SET;
+	lock.l_pid = getpid();
+	lock.l_type = F_WRLCK;
+	fcntl(fd,F_SETLK, &lock);
+
+	count_lock.l_type = F_UNLCK;
+	fcntl(count_fd, F_SETLK, &count_lock);
+	close(count_fd);
+
+	lseek(fd, (count-1)*sizeof(struct Courses), SEEK_SET);
+	write(fd, &course, sizeof(course));
+	lock.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &lock);
+	close(fd);
+
+	printf("\n Course Id: %s \n", course.course_id);
+}
+
+void addFaculty(int sock){
+	int invalid = 0, valid = 1;
+	struct Faculty faculy;
+	read(sock, &faculy, sizeof(struct Faculty));
+	int count;
+	int count_fd = open(no_of[1], O_RDWR);
+	struct flock count_lock;
+	count_lock.l_start = 0;
+	count_lock.l_len = 0;
+	count_lock.l_whence = SEEK_SET;
+	count_lock.l_pid = getpid();
+	count_lock.l_type = F_WRLCK;
+	fcntl(count_fd, F_SETLK, &count_lock);
+	lseek(count_fd, 0, SEEK_SET);
 	int count_size = read(count_fd, &count, sizeof(count));
 	printf("count size = %d\n", count_size);
 	if(count_size <= 0) count = 0;
@@ -405,25 +519,37 @@ void addNewCourse(int sock) {
 
 	char num_str[4];
     snprintf(num_str, sizeof(num_str), "%03d", count);
-	strcpy(course.course_id, "CS");
-	strcat(course.course_id, num_str);
-
-	int fd = open(Account[3], O_RDWR);
+	strcpy(faculy.login_id, "FT");
+	strcat(faculy.login_id, num_str);
+	faculy.courseCount = 0;
+	int fd = open(Account[2], O_RDWR);
 	struct flock lock;
 
-	lock.l_start = (count-1)*sizeof(struct Courses);  //lock on admin record
-	lock.l_len = sizeof(struct Courses);
+	lock.l_start = (count-1)*sizeof(struct Faculty);  //lock on faculty record
+	lock.l_len = sizeof(struct Faculty);
 	lock.l_whence = SEEK_SET;
 	lock.l_pid = getpid();
 	lock.l_type = F_WRLCK;
-	fcntl(fd,F_SETLK, &lock);
-	count_lock.l_type = F_UNLCK;
-	fcntl(count_fd, F_SETLK, &count_lock);
-	close(count_fd);
-	lseek(fd, count*sizeof(struct Courses), SEEK_SET);
-	write(fd, &course, sizeof(course));
+	if(fcntl(fd,F_SETLK, &lock)==-1) {
+		write(sock, &invalid, sizeof(invalid));
+		count--;
+		lseek(count_fd, 0, SEEK_SET);
+		write(count_fd, &count, sizeof(count));
+		count_lock.l_type = F_UNLCK;
+		fcntl(count_fd, F_SETLK, &count_lock);
+		close(count_fd);
+		return;
+	}
+	else {
+		count_lock.l_type = F_UNLCK;
+		fcntl(count_fd, F_SETLK, &count_lock);
+		close(count_fd);
+	}
+	// write(fd, &faculy, sizeof(struct Faculty));
+	lseek(fd, (count-1)*sizeof(struct Faculty), SEEK_SET);
+	write(fd, &faculy, sizeof(faculy));
 	lock.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &lock);
 	close(fd);
-	printf("\n Course Id: %s \n", course.course_id);
+	printf("\n Faculty Login Id: %s \n", faculy.login_id);
 }
