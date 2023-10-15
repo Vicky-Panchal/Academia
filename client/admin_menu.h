@@ -23,7 +23,7 @@ int adminMenu(int opt,int  sock){//used in client.c
 	printf("9. Logout and Exit\n");
 
 	int choice;
-	printf("Enter You Choice: ");
+	printf("Enter Your Choice: ");
 	scanf("%d", &choice);
 	write(sock, &choice, sizeof(choice));
 

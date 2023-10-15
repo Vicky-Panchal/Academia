@@ -18,7 +18,8 @@ struct Student {
     char address[50];
     char password[PASSWORD_LENGTH];
     char email[30];
-    int courses_enrolled[6];
+    char *courses_enrolled[6];
+    int courseCount;
 	int isActive;
 };
 

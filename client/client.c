@@ -73,9 +73,6 @@ int mainMenu(int sock){
 
 	int home_val = homeMenu(opt, sock);
 	return home_val;
-	//home menu completed
-	//user_menu
-	//admin_action | user_action
 }
 
 // void createAdmin() {
