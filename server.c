@@ -37,6 +37,7 @@ void viewOfferingCourses(char login_id[], int sock);
 void viewStudent(int sock);
 void addFaculty(int sock);
 void removeCourse(char login_id[], int sock);
+void updateCourse(char login_id[], int sock);
 
 int main() {
     signal(SIGTSTP, server_handler);
@@ -378,6 +379,9 @@ int facultyMenu(int sock, char login_id[]) {
 		case 3: removeCourse(login_id, sock);
 		break;
 
+		case 4: updateCourse(login_id, sock);
+		break;
+
 		case 6: return -1;
 
 		default: return -1;
@@ -603,6 +607,78 @@ void removeCourse(char login_id[], int sock) {
 	isExist = 1;
 	write(sock, &isExist, sizeof(isExist));
 	course.isActive = 0;
+	lseek(fd, (id-1)*sizeof(struct Courses), SEEK_SET);
+	write(fd, &course, sizeof(struct Courses));
+	
+	lock.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &lock);
+	close(fd);
+}
+
+void updateCourse(char login_id[], int sock) {
+	char courseId[5];
+	int isExist = 0;
+	int invalid = 0, valid = 1;
+
+	read(sock, &courseId, sizeof(courseId));
+	printf("COurse ID: %s\n", courseId);
+	char num_str[4];
+	strcpy(num_str, 2+courseId);
+	num_str[3] = '\0';
+	int id = atoi(num_str);
+
+	struct flock lock;
+	struct Courses course;
+	int fd = open(Account[3], O_RDWR);
+
+	lock.l_start = (id-1)*sizeof(struct Courses);
+	lock.l_len = sizeof(struct Courses);
+	lock.l_whence = SEEK_SET;
+	lock.l_pid = getpid();
+	lock.l_type = F_WRLCK;
+	if(fcntl(fd,F_SETLK, &lock)==-1) {
+		write(sock, &invalid, sizeof(invalid));
+		close(fd);
+		return;
+	}
+	write(sock, &valid, sizeof(valid));
+	lseek(fd, (id-1)*sizeof(struct Courses), SEEK_SET);
+	read(fd, &course, sizeof(struct Courses));
+	printf("read course name: %s\n", course.name);
+	if(strcmp(course.course_id, courseId) || strcmp(course.faculty_id, login_id)) {
+		write(sock, &isExist, sizeof(isExist));
+		lock.l_type = F_UNLCK;
+		fcntl(fd, F_SETLK, &lock);
+		close(fd);
+		return;
+	}
+	isExist = 1;
+	write(sock, &isExist, sizeof(isExist));
+	
+	printf("name %s\n", course.name);
+	printf("dept %s\n", course.department);
+	printf("noOfSeats %d\n", course.no_of_seats);
+
+	write(sock, &course, sizeof(struct Courses));
+	lock.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &lock);
+	close(fd);
+
+	read(sock, &course, sizeof(struct Courses));
+	printf("course name : %s \n", course.name);
+	fd = open(Account[3], O_RDWR);
+
+	lock.l_start = (id-1)*sizeof(struct Courses);
+	lock.l_len = sizeof(struct Courses);
+	lock.l_whence = SEEK_SET;
+	lock.l_pid = getpid();
+	lock.l_type = F_WRLCK;
+	if(fcntl(fd,F_SETLK, &lock)==-1) {
+		write(sock, &invalid, sizeof(invalid));
+		close(fd);
+		return;
+	}
+	write(sock, &valid, sizeof(valid));
 	lseek(fd, (id-1)*sizeof(struct Courses), SEEK_SET);
 	write(fd, &course, sizeof(struct Courses));
 	

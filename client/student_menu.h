@@ -8,7 +8,7 @@ Date: 		04/10/2023
 
 
 int studentMenu(char *login_id,int  sock){//used in client.c
-printf("------- Welcome to Student Menu --------\n");
+	printf("------- Welcome to Student Menu --------\n");
 	printf("1. View All Courses\n");
 	printf("2. Enroll (pick) New Course\n");
 	printf("3. Drop Course \n");

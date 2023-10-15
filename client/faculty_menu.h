@@ -11,6 +11,7 @@ void addNewCourse(int sock);
 void removeCourse(int sock);
 void updateCourse(int sock);
 void changePassword(int sock);
+void intToString(char* buffer, int value);
 
 int facultyMenu(char* login_id,int  sock){//used in client.c
 	printf("\n------- Welcome to Faculty Menu --------\n");
@@ -144,9 +145,124 @@ void removeCourse(int sock) {
 }
 
 void updateCourse(int sock) {
+	char courseId[5];
+	int isExist, isValid;
+	char intBuffer[20];
+	write(STDOUT_FILENO, "Enter Course Id for Update: ", sizeof("Enter Course Id for Update: "));
+	read(STDIN_FILENO, &courseId, sizeof(courseId));
 
+	write(sock, &courseId, sizeof(courseId));
+	read(sock, &isValid, sizeof(isValid));
+	if(!isValid) {
+		write(STDOUT_FILENO, "\nUnable to Update Course at the momemt, please try after sometime...", sizeof("Unable to Remove Course at the momemt, please try after sometime..."));
+		return;
+	}
+	read(sock, &isExist, sizeof(isExist));
+
+	if(!isExist) {
+		write(STDOUT_FILENO, "\nCourse with the given course id doesn't exist", sizeof("\nCourse with the given course id doesn't exist"));
+	}
+
+	struct Courses course;
+	read(sock, &course, sizeof(struct Courses));
+	printf("name %s\n", course.name);
+	printf("dept %s\n", course.department);
+	printf("noOfSeats %d\n", course.no_of_seats);
+
+	char courseName[30];
+	write(STDOUT_FILENO, "\nEnter Course Name (", sizeof("\nEnter Course Name ("));
+	write(STDOUT_FILENO, course.name, strlen(course.name));
+	write(STDOUT_FILENO, "): ", sizeof("): "));
+	read(STDIN_FILENO, &courseName, sizeof(courseName));
+
+	if(strlen(courseName) > 1) {
+		strcpy(course.name, courseName);
+	}
+
+	char courseDepartment[20];
+	write(STDOUT_FILENO, "\nEnter Department Name (", sizeof("\nEnter Department Name ("));
+	write(STDOUT_FILENO, course.department, strlen(course.department)-1);
+	write(STDOUT_FILENO, "): ", sizeof("): "));
+	read(STDIN_FILENO, &courseDepartment, sizeof(courseDepartment));
+
+	if(strlen(courseDepartment) > 1) {
+		strcpy(course.department, courseDepartment);
+	}
+
+	int noOfSeats;
+	write(STDOUT_FILENO, "Enter No. Of Seats (", sizeof("Enter No. Of Seats ("));
+	sprintf(intBuffer, "%d", course.no_of_seats);
+	write(STDOUT_FILENO, intBuffer, strlen(intBuffer));
+	write(STDOUT_FILENO, "): ", sizeof("): "));
+	read(STDIN_FILENO, &noOfSeats, sizeof(noOfSeats));
+
+	if(noOfSeats >= 0) {
+		course.no_of_seats = noOfSeats;
+	}
+
+	int noOfAvailableSeats;
+	write(STDOUT_FILENO, "Enter No. Of Available Seats (", sizeof("Enter No. Of Available Seats ("));
+	sprintf(intBuffer, "%d", course.no_of_available_seats);
+	// intToString(intBuffer, course.no_of_available_seats);
+	write(STDOUT_FILENO, intBuffer, strlen(intBuffer));
+	write(STDOUT_FILENO, "): ", sizeof("): "));
+	read(STDIN_FILENO, &noOfAvailableSeats, sizeof(noOfAvailableSeats));
+
+	if(noOfAvailableSeats >= 0) {
+		course.no_of_seats = noOfAvailableSeats;
+	}
+
+	int credits;
+	write(STDOUT_FILENO, "Enter Credits (", sizeof("Enter Credits ("));
+	sprintf(intBuffer, "%d", course.credits);
+	// intToString(intBuffer, course.credits);
+	write(STDOUT_FILENO, intBuffer, strlen(intBuffer));
+	write(STDOUT_FILENO, "): ", sizeof("): "));
+	read(STDIN_FILENO, &credits, sizeof(credits));
+
+	if(credits >= 0) {
+		course.credits = credits;
+	}
+	
+	printf("Course name %s \n", course.name);
+	write(sock, &course, sizeof(struct Courses));
+
+	read(sock, &isValid, sizeof(isValid));
+	if(!isValid) {
+		write(STDOUT_FILENO, "\nUnable to Update Course at the moment, please try after sometime...", sizeof("Unable to Remove Course at the momemt, please try after sometime..."));
+		return;
+	}
 }
 
 void changePassword(int sock) {
 
+}
+
+void intToString(char* buffer, int value) {
+    int i = 0;
+    int isNegative = 0;
+
+    if (value < 0) {
+        isNegative = 1;
+        value = -value;
+    }
+
+    do {
+        buffer[i++] = value % 10 + '0';
+        value /= 10;
+    } while (value);
+
+    if (isNegative) {
+        buffer[i++] = '-';
+    }
+
+    buffer[i] = '\0';
+
+    // Reverse the string
+    int length = strlen(buffer);
+    for (int j = 0; j < length / 2; j++) {
+        char temp = buffer[j];
+        buffer[j] = buffer[length - j - 1];
+        buffer[length - j - 1] = temp;
+    }
 }
