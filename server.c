@@ -38,6 +38,7 @@ void viewStudent(int sock);
 void addFaculty(int sock);
 void removeCourse(char login_id[], int sock);
 void updateCourse(char login_id[], int sock);
+void changePassword(int sock, char login_id[]);
 
 int main() {
     signal(SIGTSTP, server_handler);
@@ -205,7 +206,7 @@ int login(int sock, int role){
 	}
 	else if(role == 2){
 		//student
-		lock.l_start = (id-1)*sizeof(struct Student);  //lock on admin record
+		lock.l_start = (id-1)*sizeof(struct Student);  //lock on student record
 		lock.l_len = sizeof(struct Student);
 		lock.l_whence = SEEK_SET;
 		lock.l_pid = getpid();
@@ -218,7 +219,7 @@ int login(int sock, int role){
 		read(fd, &student, sizeof(struct Student));
 		printf("Student login %s\n", student.login_id);
 		printf("login id %s\n", login_id);
-		if(!strcmp(student.login_id, login_id)) {
+		if(!strcmp(student.login_id, login_id) && student.isActive) {
 			printf("s pwd %s\n", student.password);
 			printf("pwd : %s\n", password);
 			if(!strcmp(student.password, password)) {
@@ -254,6 +255,11 @@ int login(int sock, int role){
 		lseek(fd, (id - 1)*sizeof(struct Faculty), SEEK_CUR);
 		read(fd, &faculty, sizeof(struct Faculty));
 		if(!strcmp(faculty.login_id, login_id)) {
+			printf("faculty password: %d\n", strlen(faculty.password));
+			printf("entered password %d\n", strlen(password));
+
+			printf("faculty password: %s\n", faculty.password);
+			printf("entered password %s\n", password);
 			if(!strcmp(faculty.password, password)) {
 				write(sock, &valid, sizeof(valid));
 				write(sock, &role, sizeof(role));
@@ -382,6 +388,9 @@ int facultyMenu(int sock, char login_id[]) {
 		case 4: updateCourse(login_id, sock);
 		break;
 
+		case 5: changePassword(sock, login_id);
+		break;
+
 		case 6: return -1;
 
 		default: return -1;
@@ -403,7 +412,7 @@ void viewOfferingCourses(char login_id[], int sock) {
 	int i = 0;
 	int cnt = 0;
 	lseek(fd, 0, SEEK_SET);
-	while(read(fd, &courseItem, sizeof(courseItem))) {
+	while(read(fd, &courseItem, sizeof(courseItem)) > 0) {
 		cnt++;
 		lseek(fd, cnt*sizeof(courseItem), SEEK_SET);
 		if(!strcmp(courseItem.faculty_id, login_id) && courseItem.isActive) {
@@ -430,7 +439,7 @@ void addNewCourse(char login_id[], int sock) {
 	facultyLock.l_len = sizeof(struct Faculty);
 	facultyLock.l_whence = SEEK_SET;
 	facultyLock.l_pid = getpid();
-	facultyLock.l_type = F_WRLCK;
+	facultyLock.l_type =F_WRLCK;
 	fcntl(faculty_fd,F_SETLK, &facultyLock);
 
 	lseek(faculty_fd, (id-1)*sizeof(struct Faculty), SEEK_SET);
@@ -579,6 +588,34 @@ void removeCourse(char login_id[], int sock) {
 	num_str[3] = '\0';
 	int id = atoi(num_str);
 
+	char num_str2[4];
+	strcpy(num_str2, 2+login_id);
+	num_str2[3] = '\0';
+	int facultyId = atoi(num_str2);
+
+	int faculty_fd = open(Account[2], O_RDWR);
+	struct flock facultyLock;
+	struct Faculty faculty;
+
+	facultyLock.l_start = (facultyId-1)*sizeof(struct Faculty);  //lock on course record
+	facultyLock.l_len = sizeof(struct Faculty);
+	facultyLock.l_whence = SEEK_SET;
+	facultyLock.l_pid = getpid();
+	facultyLock.l_type =F_WRLCK;
+	fcntl(faculty_fd,F_SETLK, &facultyLock);
+
+	lseek(faculty_fd, (facultyId-1)*sizeof(struct Faculty), SEEK_SET);
+	read(faculty_fd, &faculty, sizeof(faculty));
+
+	faculty.courseCount -= 1;
+	lseek(faculty_fd, (facultyId-1)*sizeof(struct Faculty), SEEK_SET);
+	write(faculty_fd, &faculty, sizeof(faculty));
+
+	facultyLock.l_type = F_UNLCK;
+	fcntl(faculty_fd, F_SETLK, &facultyLock);
+	close(faculty_fd);
+
+
 	struct flock lock;
 	struct Courses course;
 	int fd = open(Account[3], O_RDWR);
@@ -642,8 +679,8 @@ void updateCourse(char login_id[], int sock) {
 		return;
 	}
 	write(sock, &valid, sizeof(valid));
-	lseek(fd, (id-1)*sizeof(struct Courses), SEEK_SET);
-	read(fd, &course, sizeof(struct Courses));
+	lseek(fd, sizeof(course), SEEK_SET);
+	read(fd, &course, sizeof(course));
 	printf("read course name: %s\n", course.name);
 	if(strcmp(course.course_id, courseId) || strcmp(course.faculty_id, login_id)) {
 		write(sock, &isExist, sizeof(isExist));
@@ -659,12 +696,12 @@ void updateCourse(char login_id[], int sock) {
 	printf("dept %s\n", course.department);
 	printf("noOfSeats %d\n", course.no_of_seats);
 
-	write(sock, &course, sizeof(struct Courses));
+	write(sock, &course, sizeof(course));
 	lock.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &lock);
 	close(fd);
 
-	read(sock, &course, sizeof(struct Courses));
+	read(sock, &course, sizeof(course));
 	printf("course name : %s \n", course.name);
 	fd = open(Account[3], O_RDWR);
 
@@ -685,4 +722,70 @@ void updateCourse(char login_id[], int sock) {
 	lock.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &lock);
 	close(fd);
+}
+
+void changePassword(int sock, char login_id[]) {
+	char num_str[4];
+	strcpy(num_str, 2+login_id);
+	num_str[3] = '\0';
+	int id = atoi(num_str);
+
+	char password[PASSWORD_LENGTH];
+	int passLen;
+	// read(sock, &passLen, sizeof(passLen));
+	read(sock, &password, sizeof(password));
+	
+
+	printf("password: %s\n", password);
+	struct flock lock;
+
+	if(login_id[0] == 'S') {
+		int fd = open(Account[1], O_RDWR);
+		struct Student student;
+		lock.l_start = (id-1)*sizeof(struct Student);  //lock on student record
+		lock.l_len = sizeof(struct Student);
+		lock.l_whence = SEEK_SET;
+		lock.l_pid = getpid();
+		lock.l_type = F_WRLCK;
+		fcntl(fd,F_SETLK, &lock);
+
+		lseek(fd, (id-1)*sizeof(struct Student), SEEK_SET);
+		read(fd, &student, sizeof(struct Student));
+
+		strcpy(student.password, password);
+
+		lseek(fd, (id-1)*sizeof(struct Student), SEEK_SET);
+		write(fd, &student, sizeof(struct Student));
+
+		lock.l_type = F_UNLCK;
+		fcntl(fd, F_SETLK, &lock);
+		close(fd);
+
+		printf("updated password: %s\n", student.password);
+	}
+	else if(login_id[0] == 'F') {
+		int fd = open(Account[2], O_RDWR);
+		struct Faculty faculty;
+
+		lock.l_start = (id-1)*sizeof(struct Faculty);  //lock on faculty record
+		lock.l_len = sizeof(struct Faculty);
+		lock.l_whence = SEEK_SET;
+		lock.l_pid = getpid();
+		lock.l_type = F_WRLCK;
+		fcntl(fd,F_SETLK, &lock);
+
+		lseek(fd, (id-1)*sizeof(struct Faculty), SEEK_SET);
+		read(fd, &faculty, sizeof(struct Faculty));
+
+		strcpy(faculty.password, password);
+
+		lseek(fd, (id-1)*sizeof(struct Faculty), SEEK_SET);
+		write(fd, &faculty, sizeof(struct Faculty));
+
+		lock.l_type = F_UNLCK;
+		fcntl(fd, F_SETLK, &lock);
+		close(fd);
+
+		printf("updated password: %s\n", faculty.password);
+	}
 }

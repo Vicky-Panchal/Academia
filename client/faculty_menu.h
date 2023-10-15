@@ -164,15 +164,15 @@ void updateCourse(int sock) {
 	}
 
 	struct Courses course;
-	read(sock, &course, sizeof(struct Courses));
+	read(sock, &course, sizeof(course));
 	printf("name %s\n", course.name);
 	printf("dept %s\n", course.department);
 	printf("noOfSeats %d\n", course.no_of_seats);
 
 	char courseName[30];
-	write(STDOUT_FILENO, "\nEnter Course Name (", sizeof("\nEnter Course Name ("));
-	write(STDOUT_FILENO, course.name, strlen(course.name));
-	write(STDOUT_FILENO, "): ", sizeof("): "));
+	write(STDOUT_FILENO, "\nEnter Course Name (", strlen("\nEnter Course Name ("));
+	write(STDOUT_FILENO, course.name, strlen(course.name)-1);
+	write(STDOUT_FILENO, "):  ", strlen("):  "));
 	read(STDIN_FILENO, &courseName, sizeof(courseName));
 
 	if(strlen(courseName) > 1) {
@@ -180,9 +180,9 @@ void updateCourse(int sock) {
 	}
 
 	char courseDepartment[20];
-	write(STDOUT_FILENO, "\nEnter Department Name (", sizeof("\nEnter Department Name ("));
+	write(STDOUT_FILENO, "\nEnter Department Name (", strlen("\nEnter Department Name ("));
 	write(STDOUT_FILENO, course.department, strlen(course.department)-1);
-	write(STDOUT_FILENO, "): ", sizeof("): "));
+	write(STDOUT_FILENO, "): ", strlen("): "));
 	read(STDIN_FILENO, &courseDepartment, sizeof(courseDepartment));
 
 	if(strlen(courseDepartment) > 1) {
@@ -190,10 +190,9 @@ void updateCourse(int sock) {
 	}
 
 	int noOfSeats;
-	write(STDOUT_FILENO, "Enter No. Of Seats (", sizeof("Enter No. Of Seats ("));
-	sprintf(intBuffer, "%d", course.no_of_seats);
-	write(STDOUT_FILENO, intBuffer, strlen(intBuffer));
-	write(STDOUT_FILENO, "): ", sizeof("): "));
+	write(STDOUT_FILENO, "Enter No. Of Seats (", strlen("Enter No. Of Seats ("));
+	write(STDOUT_FILENO, &course.no_of_seats, sizeof(course.no_of_seats));
+	write(STDOUT_FILENO, "): ", strlen("): "));
 	read(STDIN_FILENO, &noOfSeats, sizeof(noOfSeats));
 
 	if(noOfSeats >= 0) {
@@ -201,11 +200,9 @@ void updateCourse(int sock) {
 	}
 
 	int noOfAvailableSeats;
-	write(STDOUT_FILENO, "Enter No. Of Available Seats (", sizeof("Enter No. Of Available Seats ("));
-	sprintf(intBuffer, "%d", course.no_of_available_seats);
-	// intToString(intBuffer, course.no_of_available_seats);
-	write(STDOUT_FILENO, intBuffer, strlen(intBuffer));
-	write(STDOUT_FILENO, "): ", sizeof("): "));
+	write(STDOUT_FILENO, "Enter No. Of Available Seats (", strlen("Enter No. Of Available Seats ("));
+	write(STDOUT_FILENO, &course.no_of_available_seats, sizeof(course.no_of_available_seats));
+	write(STDOUT_FILENO, "): ", strlen("): "));
 	read(STDIN_FILENO, &noOfAvailableSeats, sizeof(noOfAvailableSeats));
 
 	if(noOfAvailableSeats >= 0) {
@@ -213,10 +210,8 @@ void updateCourse(int sock) {
 	}
 
 	int credits;
-	write(STDOUT_FILENO, "Enter Credits (", sizeof("Enter Credits ("));
-	sprintf(intBuffer, "%d", course.credits);
-	// intToString(intBuffer, course.credits);
-	write(STDOUT_FILENO, intBuffer, strlen(intBuffer));
+	write(STDOUT_FILENO, "Enter Credits (", strlen("Enter Credits ("));
+	write(STDOUT_FILENO, &course.credits, sizeof(course.credits));
 	write(STDOUT_FILENO, "): ", sizeof("): "));
 	read(STDIN_FILENO, &credits, sizeof(credits));
 
@@ -235,6 +230,17 @@ void updateCourse(int sock) {
 }
 
 void changePassword(int sock) {
+	char password[PASSWORD_LENGTH];
+
+	write(STDOUT_FILENO, "Enter New Password: ", strlen("Enter New Password: "));
+	scanf(" %s", password);
+	int passLen = strlen(password);
+
+	printf("pass len: %d\n", passLen);
+	// write(sock, &passLen, sizeof(passLen));
+	write(sock, &password, sizeof(password));
+	
+	write(STDOUT_FILENO, "\nPassword Changed Successfully: ", strlen("\nPassword Changed Successfully: "));
 
 }
 
