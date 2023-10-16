@@ -20,22 +20,25 @@ int studentMenu(char *login_id,int  sock){//used in client.c
 
 	int choice;
 	printf("Enter Your Choice: ");
-	scanf("%d", &choice);
-
+	scanf(" %d", &choice);
+	printf("We had taken the choice\n");
 	write(sock, &choice, sizeof(choice));
-
+	printf("\nafter choice %d", choice); 
 	switch(choice) {
 		case 1: viewAllCourses(sock);
 		break;
 
-		case 3: enrollCourse(sock);
+		case 2: enrollCourse(sock);
 		break;
 
 		case 6: return -1;
+
+		default: return -1;
 	}
 }
 
 void viewAllCourses(int sock) {
+	
 	int n;
 	struct Courses course[n];
 	read(sock, &n, sizeof(n));
@@ -43,19 +46,13 @@ void viewAllCourses(int sock) {
 	if(n >= 1) {
 		for(int i = 0; i < n; i++) {
 			write(STDOUT_FILENO, "******Course Details*****\n", strlen("******Course Details*****\n"));
-    		write(STDOUT_FILENO, "Course Id: ", strlen("Course Id: "));
-			write(STDOUT_FILENO, course[i].course_id, strlen(course[i].course_id));
-			write(STDOUT_FILENO, "\nName: ", strlen("\nName: "));
-			write(STDOUT_FILENO, course[i].name, strlen(course[i].name));
-			write(STDOUT_FILENO, "\nDepartment: ", strlen("\nDepartment: "));
-			write(STDOUT_FILENO, course[i].department, strlen(course[i].department));
-			write(STDOUT_FILENO, "\nCredits: ", strlen("\nCredits: "));
-			write(STDOUT_FILENO, &course[i].credits, sizeof(course[i].credits));
-			write(STDOUT_FILENO, "\nNo. Of Available Seats: ", strlen("\nNo. Of Available Seats: "));
-			write(STDOUT_FILENO, &course[i].no_of_available_seats, sizeof(course[i].no_of_available_seats));
-			write(STDOUT_FILENO, "\nNo. Of Seats: ", strlen("\nNo. Of Seats: "));
-			write(STDOUT_FILENO, &course[i].no_of_seats, sizeof(course[i].no_of_seats));
-			write(STDOUT_FILENO, "\n \n", strlen("\n \n"));
+    		printf("\nId: %s", course[i].course_id);
+			printf("\nName: %s", course[i].name);
+			printf("\nDepartment: %s", course[i].department);
+			printf("\nCredits: %d", course[i].credits);
+			printf("\nNo. Of Available Seats: %d", course[i].no_of_available_seats);
+			printf("\nNo. Of Seats: %d\n \n", course[i].no_of_seats);
+			write(STDOUT_FILENO, "\n \n", strlen("\n"));
 		}	
 	}
 	else {
@@ -66,10 +63,15 @@ void viewAllCourses(int sock) {
 void enrollCourse(int sock) {
 	char courseId[5];
 	int isCourseFull;
-	printf("Enter course Id: %s", courseId);
+	printf("\nEnter course Id: ");
+	scanf(" %s", courseId);
 	write(sock, &courseId, sizeof(courseId));
 
 	read(sock, &isCourseFull, sizeof(isCourseFull));
+
+	if(isCourseFull) {
+		printf("\nCourse is Full");
+	}
 
 	printf("\nSuccessfully enrolled");
 }

@@ -33,7 +33,7 @@ int adminMenu(int opt,int  sock){//used in client.c
 
 		case 3: addFaculty(sock);
 		break;
-		case 9: exit(0);
+		case 9: return -1;
 	}
 }
 char *Account[3] = {"./database/accounts/admin", "./database/accounts/student", "./database/accounts/faculty"};
