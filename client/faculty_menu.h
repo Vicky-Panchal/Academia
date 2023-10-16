@@ -70,19 +70,12 @@ void viewOfferingCourses(char* login_id,int sock) {
 	if(n >= 1) {
 		for(int i = 0; i < n; i++) {
 			write(STDOUT_FILENO, "******Course Details*****\n", strlen("******Course Details*****\n"));
-    		write(STDOUT_FILENO, "Course Id: ", strlen("Course Id: "));
-			write(STDOUT_FILENO, course[i].course_id, strlen(course[i].course_id));
-			write(STDOUT_FILENO, "\nName: ", strlen("\nName: "));
-			write(STDOUT_FILENO, course[i].name, strlen(course[i].name));
-			write(STDOUT_FILENO, "\nDepartment: ", strlen("\nDepartment: "));
-			write(STDOUT_FILENO, course[i].department, strlen(course[i].department));
-			write(STDOUT_FILENO, "\nCredits: ", strlen("\nCredits: "));
-			write(STDOUT_FILENO, &course[i].credits, sizeof(course[i].credits));
-			write(STDOUT_FILENO, "\nNo. Of Available Seats: ", strlen("\nNo. Of Available Seats: "));
-			write(STDOUT_FILENO, &course[i].no_of_available_seats, sizeof(course[i].no_of_available_seats));
-			write(STDOUT_FILENO, "\nNo. Of Seats: ", strlen("\nNo. Of Seats: "));
-			write(STDOUT_FILENO, &course[i].no_of_seats, sizeof(course[i].no_of_seats));
-			write(STDOUT_FILENO, "\n \n", strlen("\n \n"));
+    		printf("\nId: %s", course[i].course_id);
+			printf("\nName: %s", course[i].name);
+			printf("\nDepartment: %s", course[i].department);
+			printf("\nCredits: %d", course[i].credits);
+			printf("\nNo. Of Available Seats: %d", course[i].no_of_available_seats);
+			printf("\nNo. Of Seats: %d\n \n", course[i].no_of_seats);
 		}	
 	}
 	else {
@@ -102,22 +95,22 @@ void addNewCourse(int sock) {
 		return;
 	}
 
-	write(STDOUT_FILENO, "Enter Course Name: ", 20);
-    read(STDIN_FILENO, course.name, sizeof(course.name));
+	printf("\nEnter Course Name: ");
+	scanf(" %s", course.name);
 
-    write(STDOUT_FILENO, "Enter Department: ", 19);
-    read(STDIN_FILENO, course.department, sizeof(course.department));
+	printf("\nEnter Department: ");
+	scanf(" %s", course.department);
 
-    write(STDOUT_FILENO, "Enter Number of Seats: ", 24);
-    read(STDIN_FILENO, &course.no_of_seats, sizeof(course.no_of_seats));
+	printf("\nEnter Number of Seats: ");
+	scanf(" %d", &course.no_of_seats);
 
-    write(STDOUT_FILENO, "Enter Credits: ", 14);
-    read(STDIN_FILENO, &course.credits, sizeof(course.credits));
+	printf("\nEnter Credits: ");
+	scanf(" %d",&course.credits);
 
-    write(STDOUT_FILENO, "Enter Available Seats: ", 23);
-    read(STDIN_FILENO, &course.no_of_available_seats, sizeof(course.no_of_available_seats));
+	printf("\nEnter Available Seats: ");
+	scanf(" %d", &course.no_of_available_seats);
 
-	write(sock, &course, sizeof(course));
+	write(sock, &course, sizeof(struct Courses));
 }
 
 void removeCourse(int sock) {
@@ -161,59 +154,47 @@ void updateCourse(int sock) {
 
 	if(!isExist) {
 		write(STDOUT_FILENO, "\nCourse with the given course id doesn't exist", sizeof("\nCourse with the given course id doesn't exist"));
+		return;
 	}
 
 	struct Courses course;
 	read(sock, &course, sizeof(course));
-	printf("name %s\n", course.name);
-	printf("dept %s\n", course.department);
-	printf("noOfSeats %d\n", course.no_of_seats);
 
 	char courseName[30];
-	write(STDOUT_FILENO, "\nEnter Course Name (", strlen("\nEnter Course Name ("));
-	write(STDOUT_FILENO, course.name, strlen(course.name)-1);
-	write(STDOUT_FILENO, "):  ", strlen("):  "));
-	read(STDIN_FILENO, &courseName, sizeof(courseName));
+	printf("\nEnter Course Name (%s): ", course.name);
+	scanf(" %s", courseName);
 
 	if(strlen(courseName) > 1) {
 		strcpy(course.name, courseName);
 	}
 
 	char courseDepartment[20];
-	write(STDOUT_FILENO, "\nEnter Department Name (", strlen("\nEnter Department Name ("));
-	write(STDOUT_FILENO, course.department, strlen(course.department)-1);
-	write(STDOUT_FILENO, "): ", strlen("): "));
-	read(STDIN_FILENO, &courseDepartment, sizeof(courseDepartment));
+	printf("\nEnter Department Name (%s): ", course.department);
+	scanf(" %s", courseDepartment);
 
 	if(strlen(courseDepartment) > 1) {
 		strcpy(course.department, courseDepartment);
 	}
 
 	int noOfSeats;
-	write(STDOUT_FILENO, "Enter No. Of Seats (", strlen("Enter No. Of Seats ("));
-	write(STDOUT_FILENO, &course.no_of_seats, sizeof(course.no_of_seats));
-	write(STDOUT_FILENO, "): ", strlen("): "));
-	read(STDIN_FILENO, &noOfSeats, sizeof(noOfSeats));
+	printf("\nEnter No. Of Seats (%d): ", course.no_of_seats);
+	scanf(" %d", &noOfSeats);
 
 	if(noOfSeats >= 0) {
 		course.no_of_seats = noOfSeats;
 	}
 
 	int noOfAvailableSeats;
-	write(STDOUT_FILENO, "Enter No. Of Available Seats (", strlen("Enter No. Of Available Seats ("));
-	write(STDOUT_FILENO, &course.no_of_available_seats, sizeof(course.no_of_available_seats));
-	write(STDOUT_FILENO, "): ", strlen("): "));
-	read(STDIN_FILENO, &noOfAvailableSeats, sizeof(noOfAvailableSeats));
+	printf("\nEnter No. Of Available Seats (%d): ", course.no_of_available_seats);
+	scanf(" %d", &noOfAvailableSeats);
 
 	if(noOfAvailableSeats >= 0) {
-		course.no_of_seats = noOfAvailableSeats;
+		course.no_of_available_seats = noOfAvailableSeats;
 	}
 
 	int credits;
-	write(STDOUT_FILENO, "Enter Credits (", strlen("Enter Credits ("));
-	write(STDOUT_FILENO, &course.credits, sizeof(course.credits));
-	write(STDOUT_FILENO, "): ", sizeof("): "));
-	read(STDIN_FILENO, &credits, sizeof(credits));
+	printf("\nEnter Credits (%d): ", course.credits);
+	scanf(" %d", &credits);
 
 	if(credits >= 0) {
 		course.credits = credits;

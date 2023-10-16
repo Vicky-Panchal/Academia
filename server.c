@@ -510,7 +510,7 @@ void addNewCourse(char login_id[], int sock) {
 	close(count_fd);
 
 	lseek(fd, (count-1)*sizeof(struct Courses), SEEK_SET);
-	write(fd, &course, sizeof(course));
+	write(fd, &course, sizeof(struct Courses));
 	lock.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &lock);
 	close(fd);
@@ -679,7 +679,7 @@ void updateCourse(char login_id[], int sock) {
 		return;
 	}
 	write(sock, &valid, sizeof(valid));
-	lseek(fd, sizeof(course), SEEK_SET);
+	lseek(fd, (id-1)*sizeof(course), SEEK_SET);
 	read(fd, &course, sizeof(course));
 	printf("read course name: %s\n", course.name);
 	if(strcmp(course.course_id, courseId) || strcmp(course.faculty_id, login_id)) {
@@ -696,12 +696,12 @@ void updateCourse(char login_id[], int sock) {
 	printf("dept %s\n", course.department);
 	printf("noOfSeats %d\n", course.no_of_seats);
 
-	write(sock, &course, sizeof(course));
+	write(sock, &course, sizeof(struct Courses));
 	lock.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &lock);
 	close(fd);
 
-	read(sock, &course, sizeof(course));
+	read(sock, &course, sizeof(struct Courses));
 	printf("course name : %s \n", course.name);
 	fd = open(Account[3], O_RDWR);
 
