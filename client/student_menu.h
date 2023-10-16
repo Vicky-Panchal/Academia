@@ -8,9 +8,12 @@ Date: 		04/10/2023
 
 void viewAllCourses(int sock);
 void enrollCourse(int sock);
+void dropCourse(int sock);
+void viewEnrolledCourses(int sock);
+// void changePassword(sock);
 
 int studentMenu(char *login_id,int  sock){//used in client.c
-	printf("------- Welcome to Student Menu --------\n");
+	printf("\n------- Welcome to Student Menu --------\n");
 	printf("1. View All Courses\n");
 	printf("2. Enroll (pick) New Course\n");
 	printf("3. Drop Course \n");
@@ -30,6 +33,15 @@ int studentMenu(char *login_id,int  sock){//used in client.c
 
 		case 2: enrollCourse(sock);
 		break;
+
+		case 3: dropCourse(sock);
+		break;
+
+		case 4: viewEnrolledCourses(sock);
+		break;
+
+		// case 5: changePassword(sock);
+		// break;
 
 		case 6: return -1;
 
@@ -72,6 +84,25 @@ void enrollCourse(int sock) {
 	if(isCourseFull) {
 		printf("\nCourse is Full");
 	}
-
-	printf("\nSuccessfully enrolled");
+	else {
+		printf("\nSuccessfully enrolled");
+	}
 }
+
+void dropCourse(int sock) {
+	char courseId[5];
+
+	printf("\nEnter course Id: ");
+	scanf(" %s", courseId);
+	write(sock, &courseId, sizeof(courseId));
+
+	printf("\n Course Successfully Dropped1");
+}
+
+void viewEnrolledCourses(int sock) {
+
+}
+
+// void changePassword(sock) {
+
+// }
