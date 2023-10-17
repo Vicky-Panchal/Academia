@@ -1,2 +1,2 @@
-#define PORT 8886
+#define PORT 8870
 #define PASSWORD_LENGTH 25

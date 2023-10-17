@@ -100,7 +100,22 @@ void dropCourse(int sock) {
 }
 
 void viewEnrolledCourses(int sock) {
+	int n = 2;
+	read(sock, &n, sizeof(n));
+	struct Courses course[n];
+	
+	read(sock, &course, sizeof(course));
 
+	for(int i = 0; i < n; i++) {
+			printf("\n******Enrolled Courses*****\n");
+    		printf("\nId: %s", course[i].course_id);
+			printf("\nName: %s", course[i].name);
+			printf("\nDepartment: %s", course[i].department);
+			printf("\nCredits: %d", course[i].credits);
+			printf("\nNo. Of Available Seats: %d", course[i].no_of_available_seats);
+			printf("\nNo. Of Seats: %d\n \n", course[i].no_of_seats);
+			write(STDOUT_FILENO, "\n \n", strlen("\n"));
+	}
 }
 
 // void changePassword(sock) {
