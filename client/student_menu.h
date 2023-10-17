@@ -10,7 +10,7 @@ void viewAllCourses(int sock);
 void enrollCourse(int sock);
 void dropCourse(int sock);
 void viewEnrolledCourses(int sock);
-// void changePassword(sock);
+void changePassword(sock);
 
 int studentMenu(char *login_id,int  sock){//used in client.c
 	printf("\n------- Welcome to Student Menu --------\n");
@@ -24,9 +24,9 @@ int studentMenu(char *login_id,int  sock){//used in client.c
 	int choice;
 	printf("Enter Your Choice: ");
 	scanf(" %d", &choice);
-	printf("We had taken the choice\n");
+	
 	write(sock, &choice, sizeof(choice));
-	printf("\nafter choice %d", choice); 
+
 	switch(choice) {
 		case 1: viewAllCourses(sock);
 		break;
@@ -40,8 +40,8 @@ int studentMenu(char *login_id,int  sock){//used in client.c
 		case 4: viewEnrolledCourses(sock);
 		break;
 
-		// case 5: changePassword(sock);
-		// break;
+		case 5: changePassword(sock);
+		break;
 
 		case 6: return -1;
 

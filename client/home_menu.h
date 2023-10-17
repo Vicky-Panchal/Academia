@@ -24,7 +24,7 @@ int homeMenu(int opt,int  sock){//used in client.c
 		int valid_login;
 		int role;
 		read(sock, &valid_login, sizeof(valid_login));
-		printf("valid login is: %d\n", valid_login);
+		
 		if(valid_login == 1){
 			read(sock, &role, sizeof(role));
 			switch(role) {
