@@ -73,7 +73,7 @@ void addStudent(int sock) {
 	scanf("%s", student.address);
 	printf("Enter Password: \n");
 	scanf("%s", student.password);
-	printf("Enter You Email Address: \n");
+	printf("Enter Your Email Address: \n");
 	scanf("%s", student.email);
 	
 	write(sock, &student, sizeof(struct Student));
@@ -113,8 +113,9 @@ void viewStudents(int sock){
 		printf("Name :%s \n",student.name);
 		printf("Age : %d \n",student.age);
 		printf("Email : %s \n",student.email);
+
 		printf("Address: %s \n",student.address);
-		printf("Sudent Status: %d \n",student.isActive);
+		printf("Student Status: %d \n",student.isActive);
 		printf("Course Enrolled: %d \n", student.courseCount);
 		// printf("Course Enrolled are: [: ");
 		// for(int i = 0; i < student.courseCount; i++) {

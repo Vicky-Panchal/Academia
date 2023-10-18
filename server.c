@@ -341,6 +341,7 @@ void addStudent(int sock) {
 	strcpy(student.login_id, "MT");
 	strcat(student.login_id, num_str);
 	student.courseCount = 0;
+	student.isActive = 1;
 	int fd = open(Account[1], O_RDWR);
 	struct flock lock;
 
@@ -950,6 +951,7 @@ void dropCourse(char login_id[], int sock) {
 }
 
 void viewEnrollCourses(char login_id[], int sock) {
+	
 	int stfd = open(Account[1], O_RDWR);
 	struct Student student;
 
@@ -975,7 +977,6 @@ void viewEnrollCourses(char login_id[], int sock) {
 	struct Courses course[student.courseCount];
 	int fd = open(Account[3], O_RDONLY);
 	int cnt = 0;
-	lseek(fd, 0, SEEK_SET);
 	for(int i = 0; i < student.courseCount; i++) {
 		lseek(fd, (courseIds[i] - 1)*sizeof(struct Courses), SEEK_SET);
 		read(fd, &courseItem, sizeof(courseItem));

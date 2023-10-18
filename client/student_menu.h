@@ -100,10 +100,15 @@ void dropCourse(int sock) {
 }
 
 void viewEnrolledCourses(int sock) {
-	int n = 2;
+	
+	int n;
 	read(sock, &n, sizeof(n));
 	struct Courses course[n];
 	
+	if(n == 0) {
+		printf("\nYou are not enrolled in any courses.");
+		return;
+	}
 	read(sock, &course, sizeof(course));
 
 	for(int i = 0; i < n; i++) {
@@ -117,7 +122,3 @@ void viewEnrolledCourses(int sock) {
 			write(STDOUT_FILENO, "\n \n", strlen("\n"));
 	}
 }
-
-// void changePassword(sock) {
-
-// }
