@@ -52,8 +52,8 @@ int studentMenu(char *login_id,int  sock){//used in client.c
 void viewAllCourses(int sock) {
 	
 	int n;
-	struct Courses course[n];
 	read(sock, &n, sizeof(n));
+	struct Courses course[n];
 	read(sock, &course, sizeof(course));
 	if(n >= 1) {
 		for(int i = 0; i < n; i++) {
