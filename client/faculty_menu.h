@@ -23,23 +23,8 @@ int facultyMenu(char* login_id,int  sock){//used in client.c
 	printf("6. Logout & Exit\n");
 	
 	int choice;
-	char prompt[] = "Enter Your Choice: ";
-	char buffer[10];
-
-    write(STDOUT_FILENO, prompt, sizeof(prompt));
-
-    ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
-    if (bytesRead == -1) {
-        perror("read");
-        return 0;
-    }
-
-    buffer[bytesRead] = '\0';
-
-    if (sscanf(buffer, "%d", &choice) != 1) {
-        fprintf(stderr, "\nInvalid input. Please enter an integer.\n");
-        return 0;
-    }
+	printf("Enter Your Choice: ");
+	scanf("%d", &choice);
 	write(sock, &choice, sizeof(choice));
 
 	switch(choice) {
@@ -79,7 +64,7 @@ void viewOfferingCourses(char* login_id,int sock) {
 		}	
 	}
 	else {
-		write(STDOUT_FILENO, "No Course Found!", 17);
+		printf("\nNo Course Found!\n");
 	}
 }
 
@@ -123,16 +108,16 @@ void removeCourse(int sock) {
 	write(sock, &courseId, sizeof(courseId));
 	read(sock, &isValid, sizeof(isValid));
 	if(!isValid) {
-		write(STDOUT_FILENO, "\nUnable to Remove Course at the momemt, please try after sometime...", sizeof("Unable to Remove Course at the momemt, please try after sometime..."));
+		printf("\nUnable to Remove Course at the momemt, please try after sometime...");
 		return;
 	}
 	read(sock, &isExist, sizeof(isExist));
 
 	if(!isExist) {
-		write(STDOUT_FILENO, "\nCourse with the given course id doesn't exist", sizeof("\nCourse with the given course id doesn't exist"));
+		printf("\nCourse with the given course id doesn't exist");
 	}
 	else {
-		write(STDOUT_FILENO, "\nCourse Deleted Successfully", sizeof("\nCourse Deleted Successfully"));
+		printf("\nCourse Deleted Successfully");
 	}
 	return;
 }
